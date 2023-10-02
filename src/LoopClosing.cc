@@ -1613,7 +1613,8 @@ void LoopClosing::MergeLocal()
     vdMergeMaps_ms.push_back(timeMergeMaps);
 #endif
 
-    bool bStop = false;
+    bool bStop = true;
+    Verbose::PrintMess("MERGE: Start local BA ", Verbose::VERBOSITY_DEBUG);
     vpLocalCurrentWindowKFs.clear();
     vpMergeConnectedKFs.clear();
     std::copy(spLocalWindowKFs.begin(), spLocalWindowKFs.end(), std::back_inserter(vpLocalCurrentWindowKFs));

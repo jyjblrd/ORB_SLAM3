@@ -451,6 +451,11 @@ void MapPoint::UpdateNormalAndDepth()
         tuple<int,int> indexes = mit -> second;
         int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
 
+        if ((pKF->GetCameraCenter()).empty())
+        {
+            return;
+        }
+
         if(leftIndex != -1){
             Eigen::Vector3f Owi = pKF->GetCameraCenter();
             Eigen::Vector3f normali = Pos - Owi;
@@ -570,13 +575,16 @@ void MapPoint::UpdateMap(Map* pMap)
 }
 
 void MapPoint::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP)
-{
+{  
+    
     mBackupReplacedId = -1;
     if(mpReplaced && spMP.find(mpReplaced) != spMP.end())
         mBackupReplacedId = mpReplaced->mnId;
 
+    /*
     mBackupObservationsId1.clear();
     mBackupObservationsId2.clear();
+
     // Save the id and position in each KF who view it
     for(std::map<KeyFrame*,std::tuple<int,int> >::const_iterator it = mObservations.begin(), end = mObservations.end(); it != end; ++it)
     {
@@ -591,29 +599,34 @@ void MapPoint::PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP)
             EraseObservation(pKFi);
         }
     }
+    */
 
     // Save the id of the reference KF
     if(spKF.find(mpRefKF) != spKF.end())
     {
         mBackupRefKFId = mpRefKF->mnId;
     }
+
 }
 
 void MapPoint::PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid)
 {
-    mpRefKF = mpKFid[mBackupRefKFId];
+    
+    //mpRefKF = mpKFid[mBackupRefKFId];
     if(!mpRefKF)
     {
-        cout << "ERROR: MP without KF reference " << mBackupRefKFId << "; Num obs: " << nObs << endl;
+        cout << "MP without KF reference " << mBackupRefKFId << "; Num obs: " << nObs << endl;
     }
+    
     mpReplaced = static_cast<MapPoint*>(NULL);
     if(mBackupReplacedId>=0)
     {
-        map<long unsigned int, MapPoint*>::iterator it = mpMPid.find(mBackupReplacedId);
-        if (it != mpMPid.end())
-            mpReplaced = it->second;
+       map<long unsigned int, MapPoint*>::iterator it = mpMPid.find(mBackupReplacedId);
+       if (it != mpMPid.end())
+        mpReplaced = it->second;
     }
-
+    /*
+    
     mObservations.clear();
 
     for(map<long unsigned int, int>::const_iterator it = mBackupObservationsId1.begin(), end = mBackupObservationsId1.end(); it != end; ++it)
@@ -629,6 +642,8 @@ void MapPoint::PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsi
 
     mBackupObservationsId1.clear();
     mBackupObservationsId2.clear();
+    */
+    
 }
 
 } //namespace ORB_SLAM

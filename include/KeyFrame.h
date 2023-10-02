@@ -51,7 +51,96 @@ class GeometricCamera;
 
 class KeyFrame
 {
+
+    template<class Archive>
+    void serializeMatrix(Archive& ar, cv::Mat& mat, const unsigned int version)
+    {
+        int cols, rows, type;
+        bool continuous;
+
+        if (Archive::is_saving::value) {
+            cols = mat.cols; rows = mat.rows; type = mat.type();
+            continuous = mat.isContinuous();
+        }
+
+        ar & cols & rows & type & continuous;
+
+        if (Archive::is_loading::value)
+            mat.create(rows, cols, type);
+
+        if (continuous) {
+            const unsigned int data_size = rows * cols * mat.elemSize();
+            ar & boost::serialization::make_array(mat.ptr(), data_size);
+        } else {
+            const unsigned int row_size = cols*mat.elemSize();
+            for (int i = 0; i < rows; i++) {
+                ar & boost::serialization::make_array(mat.ptr(i), row_size);
+            }
+        }
+    }
+
+
+    template<class Archive>
+    void serializeMatrix(Archive& ar, const cv::Mat& mat, const unsigned int version)
+    {
+        cv::Mat matAux = mat;
+
+        serializeMatrix(ar, matAux,version);
+
+        if (Archive::is_loading::value)
+        {
+            cv::Mat* ptr;
+            ptr = (cv::Mat*)( &mat );
+            *ptr = matAux;
+        }
+    }
+
     friend class boost::serialization::access;
+    template<class Archive>
+    void serializeVectorKeyPoints(Archive& ar, const vector<cv::KeyPoint>& vKP, const unsigned int version)
+    {
+        int NumEl;
+
+        if (Archive::is_saving::value) {
+            NumEl = vKP.size();
+        }
+
+        ar & NumEl;
+
+        vector<cv::KeyPoint> vKPaux = vKP;
+        if (Archive::is_loading::value)
+            vKPaux.reserve(NumEl);
+
+        for(int i=0; i < NumEl; ++i)
+        {
+            cv::KeyPoint KPi;
+
+            if (Archive::is_loading::value)
+                KPi = cv::KeyPoint();
+
+            if (Archive::is_saving::value)
+                KPi = vKPaux[i];
+
+            ar & KPi.angle;
+            ar & KPi.response;
+            ar & KPi.size;
+            ar & KPi.pt.x;
+            ar & KPi.pt.y;
+            ar & KPi.class_id;
+            ar & KPi.octave;
+
+            if (Archive::is_loading::value)
+                vKPaux.push_back(KPi);
+        }
+
+
+        if (Archive::is_loading::value)
+        {
+            vector<cv::KeyPoint> *ptr;
+            ptr = (vector<cv::KeyPoint>*)( &vKP );
+            *ptr = vKPaux;
+        }
+    }
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version)
@@ -64,47 +153,45 @@ class KeyFrame
         ar & const_cast<int&>(mnGridRows);
         ar & const_cast<float&>(mfGridElementWidthInv);
         ar & const_cast<float&>(mfGridElementHeightInv);
-
         // Variables of tracking
-        //ar & mnTrackReferenceForFrame;
-        //ar & mnFuseTargetForKF;
+        ar & mnTrackReferenceForFrame;
+        ar & mnFuseTargetForKF;
         // Variables of local mapping
-        //ar & mnBALocalForKF;
-        //ar & mnBAFixedForKF;
-        //ar & mnNumberOfOpt;
+        ar & mnBALocalForKF;
+        ar & mnBAFixedForKF;
+        ar & mnNumberOfOpt;
         // Variables used by KeyFrameDatabase
-        //ar & mnLoopQuery;
-        //ar & mnLoopWords;
-        //ar & mLoopScore;
-        //ar & mnRelocQuery;
-        //ar & mnRelocWords;
-        //ar & mRelocScore;
-        //ar & mnMergeQuery;
-        //ar & mnMergeWords;
-        //ar & mMergeScore;
-        //ar & mnPlaceRecognitionQuery;
-        //ar & mnPlaceRecognitionWords;
-        //ar & mPlaceRecognitionScore;
-        //ar & mbCurrentPlaceRecognition;
+        ar & mnLoopQuery;
+        ar & mnLoopWords;
+        ar & mLoopScore;
+        ar & mnRelocQuery;
+        ar & mnRelocWords;
+        ar & mRelocScore;
+        ar & mnMergeQuery;
+        ar & mnMergeWords;
+        ar & mMergeScore;
+        ar & mnPlaceRecognitionQuery;
+        ar & mnPlaceRecognitionWords;
+        ar & mPlaceRecognitionScore;
+        ar & mbCurrentPlaceRecognition;
         // Variables of loop closing
-        //serializeMatrix(ar,mTcwGBA,version);
-        //serializeMatrix(ar,mTcwBefGBA,version);
-        //serializeMatrix(ar,mVwbGBA,version);
-        //serializeMatrix(ar,mVwbBefGBA,version);
-        //ar & mBiasGBA;
-        //ar & mnBAGlobalForKF;
+        serializeMatrix(ar,mTcwGBA,version);
+        serializeMatrix(ar,mTcwBefGBA,version);
+        serializeMatrix(ar,mVwbGBA,version);
+        serializeMatrix(ar,mVwbBefGBA,version);
+        ar & mBiasGBA;
+        ar & mnBAGlobalForKF;
         // Variables of Merging
-        //serializeMatrix(ar,mTcwMerge,version);
-        //serializeMatrix(ar,mTcwBefMerge,version);
-        //serializeMatrix(ar,mTwcBefMerge,version);
-        //serializeMatrix(ar,mVwbMerge,version);
-        //serializeMatrix(ar,mVwbBefMerge,version);
-        //ar & mBiasMerge;
-        //ar & mnMergeCorrectedForKF;
-        //ar & mnMergeForKF;
-        //ar & mfScaleMerge;
-        //ar & mnBALocalForMerge;
-
+        serializeMatrix(ar,mTcwMerge,version);
+        serializeMatrix(ar,mTcwBefMerge,version);
+        serializeMatrix(ar,mTwcBefMerge,version);
+        serializeMatrix(ar,mVwbMerge,version);
+        serializeMatrix(ar,mVwbBefMerge,version);
+        ar & mBiasMerge;
+        ar & mnMergeCorrectedForKF;
+        ar & mnMergeForKF;
+        ar & mfScaleMerge;
+        ar & mnBALocalForMerge;
         // Scale
         ar & mfScale;
         // Calibration parameters
@@ -117,20 +204,20 @@ class KeyFrame
         ar & const_cast<float&>(mbf);
         ar & const_cast<float&>(mb);
         ar & const_cast<float&>(mThDepth);
-        serializeMatrix(ar, mDistCoef, version);
+        serializeMatrix(ar,mDistCoef,version);
         // Number of Keypoints
         ar & const_cast<int&>(N);
         // KeyPoints
-        serializeVectorKeyPoints<Archive>(ar, mvKeys, version);
-        serializeVectorKeyPoints<Archive>(ar, mvKeysUn, version);
+        serializeVectorKeyPoints(ar,mvKeys,version);
+        serializeVectorKeyPoints(ar,mvKeysUn,version);
         ar & const_cast<vector<float>& >(mvuRight);
         ar & const_cast<vector<float>& >(mvDepth);
-        serializeMatrix<Archive>(ar,mDescriptors,version);
+        serializeMatrix(ar,mDescriptors,version);
         // BOW
         ar & mBowVec;
         ar & mFeatVec;
         // Pose relative to parent
-        serializeSophusSE3<Archive>(ar, mTcp, version);
+        serializeMatrix(ar,mTcp,version);
         // Scale
         ar & const_cast<int&>(mnScaleLevels);
         ar & const_cast<float&>(mfScaleFactor);
@@ -143,11 +230,12 @@ class KeyFrame
         ar & const_cast<int&>(mnMinY);
         ar & const_cast<int&>(mnMaxX);
         ar & const_cast<int&>(mnMaxY);
-        ar & boost::serialization::make_array(mK_.data(), mK_.size());
+        serializeMatrix(ar,mK,version);
         // Pose
-        serializeSophusSE3<Archive>(ar, mTcw, version);
+        serializeMatrix(ar,Tcw,version);
         // MapPointsId associated to keypoints
         ar & mvBackupMapPointsId;
+        ar & mvpMapPoints;
         // Grid
         ar & mGrid;
         // Connected KeyFrameWeight
@@ -165,21 +253,22 @@ class KeyFrame
 
         ar & mHalfBaseline;
 
-        ar & mnOriginMapId;
-
         // Camera variables
         ar & mnBackupIdCamera;
         ar & mnBackupIdCamera2;
 
-        // Fisheye variables
+        // Stereo variables
         ar & mvLeftToRightMatch;
         ar & mvRightToLeftMatch;
+        //NLeft & NRight need to be casted beforehand (const int)
         ar & const_cast<int&>(NLeft);
         ar & const_cast<int&>(NRight);
-        serializeSophusSE3<Archive>(ar, mTlr, version);
-        serializeVectorKeyPoints<Archive>(ar, mvKeysRight, version);
+        serializeMatrix(ar, mTlr, version);
+        serializeMatrix(ar, mTrl, version);
+        serializeVectorKeyPoints(ar, mvKeysRight, version);
         ar & mGridRight;
 
+	/*
         // Inertial variables
         ar & mImuBias;
         ar & mBackupImuPreintegrated;
@@ -187,9 +276,9 @@ class KeyFrame
         ar & mBackupPrevKFId;
         ar & mBackupNextKFId;
         ar & bImu;
-        ar & boost::serialization::make_array(mVw.data(), mVw.size());
-        ar & boost::serialization::make_array(mOwb.data(), mOwb.size());
-        ar & mbHasVelocity;
+        serializeMatrix(ar, Vw, version);
+        serializeMatrix(ar, Owb, version);*/
+
     }
 
 public:
@@ -298,7 +387,6 @@ public:
 
     void PreSave(set<KeyFrame*>& spKF,set<MapPoint*>& spMP, set<GeometricCamera*>& spCam);
     void PostLoad(map<long unsigned int, KeyFrame*>& mpKFid, map<long unsigned int, MapPoint*>& mpMPid, map<unsigned int, GeometricCamera*>& mpCamId);
-
 
     void SetORBVocabulary(ORBVocabulary* pORBVoc);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKFDB);
@@ -447,6 +535,7 @@ protected:
 
     // MapPoints associated to keypoints
     std::vector<MapPoint*> mvpMapPoints;
+
     // For save relation without pointer, this is necessary for save/load function
     std::vector<long long int> mvBackupMapPointsId;
 
@@ -460,6 +549,7 @@ protected:
     std::map<KeyFrame*,int> mConnectedKeyFrameWeights;
     std::vector<KeyFrame*> mvpOrderedConnectedKeyFrames;
     std::vector<int> mvOrderedWeights;
+
     // For save relation without pointer, this is necessary for save/load function
     std::map<long unsigned int, int> mBackupConnectedKeyFrameIdWeights;
 
@@ -469,6 +559,7 @@ protected:
     std::set<KeyFrame*> mspChildrens;
     std::set<KeyFrame*> mspLoopEdges;
     std::set<KeyFrame*> mspMergeEdges;
+
     // For save relation without pointer, this is necessary for save/load function
     long long int mBackupParentId;
     std::vector<long unsigned int> mvBackupChildrensId;
@@ -500,6 +591,14 @@ protected:
     std::mutex mMutexConnections;
     std::mutex mMutexFeatures;
     std::mutex mMutexMap;
+
+    // Backup variables for inertial
+    long long int mBackupPrevKFId;
+    long long int mBackupNextKFId;
+    IMU::Preintegrated mBackupImuPreintegrated;
+
+    // Backup for Cameras
+    unsigned int mnBackupIdCamera, mnBackupIdCamera2;
 
 public:
     GeometricCamera* mpCamera, *mpCamera2;

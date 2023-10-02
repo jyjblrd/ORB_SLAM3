@@ -184,6 +184,8 @@ public:
 
     void ChangeDataset();
 
+    void SaveAtlas(int type, string saveFileName);
+
     float GetImageScale();
 
 #ifdef REGISTER_TIMES

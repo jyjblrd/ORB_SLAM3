@@ -199,6 +199,9 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
             Eigen::Matrix4f Twc = pKF->GetPoseInverse().matrix();
             unsigned int index_color = pKF->mnOriginMapId;
 
+            if (index_color > 5)
+                index_color = 0;
+
             glPushMatrix();
 
             glMultMatrixf((GLfloat*)Twc.data());
@@ -349,6 +352,9 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
                 KeyFrame* pKF = vpKFs[i];
                 Eigen::Matrix4f Twc = pKF->GetPoseInverse().matrix();
                 unsigned int index_color = pKF->mnOriginMapId;
+
+                if (index_color > 5)
+                    index_color = 0;
 
                 glPushMatrix();
 

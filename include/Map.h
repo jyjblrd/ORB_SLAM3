@@ -28,6 +28,8 @@
 #include <mutex>
 
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/serialization/set.hpp>
 
 
 namespace ORB_SLAM3
@@ -50,21 +52,28 @@ class Map
         ar & mnMaxKFid;
         ar & mnBigChangeIdx;
 
-        // Save/load a set structure, the set structure is broken in libboost 1.58 for ubuntu 16.04, a vector is serializated
-        //ar & mspKeyFrames;
-        //ar & mspMapPoints;
-        ar & mvpBackupKeyFrames;
-        ar & mvpBackupMapPoints;
+        ar & mspKeyFrames;
+        ar & mspMapPoints;
+
+        //ar & mvpBackupKeyFrames;
+        //ar & mvpBackupMapPoints;
 
         ar & mvBackupKeyFrameOriginsId;
 
         ar & mnBackupKFinitialID;
         ar & mnBackupKFlowerID;
+        
+        ar & mpKFinitial;
+        ar & mpKFlowerID;
 
         ar & mbImuInitialized;
         ar & mbIsInertial;
         ar & mbIMU_BA1;
         ar & mbIMU_BA2;
+
+        ar & mnInitKFid;
+        ar & mnMaxKFid;
+        ar & mnLastLoopKFid;
     }
 
 public:
@@ -135,6 +144,11 @@ public:
 
     void printReprojectionError(list<KeyFrame*> &lpLocalWindowKFs, KeyFrame* mpCurrentKF, string &name, string &name_folder);
 
+    void PreSave(std::set<GeometricCamera*> &spCams);
+    void PostLoad(KeyFrameDatabase* pKFDB, ORBVocabulary* pORBVoc/*, map<long unsigned int, KeyFrame*>& mpKeyFrameId*/, map<unsigned int, GeometricCamera*> &mpCams);
+
+    void printReprojectionError(list<KeyFrame*> &lpLocalWindowKFs, KeyFrame* mpCurrentKF, string &name, string &name_folder);
+
     vector<KeyFrame*> mvpKeyFrameOrigins;
     vector<unsigned long int> mvBackupKeyFrameOriginsId;
     KeyFrame* mpFirstRegionKF;
@@ -168,6 +182,9 @@ protected:
 
     KeyFrame* mpKFinitial;
     KeyFrame* mpKFlowerID;
+
+    unsigned long int mnBackupKFinitialID;
+    unsigned long int mnBackupKFlowerID;
 
     unsigned long int mnBackupKFinitialID;
     unsigned long int mnBackupKFlowerID;

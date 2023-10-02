@@ -77,8 +77,13 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
                 std::cout << "*Error with the IMU parameters in the config file*" << std::endl;
             }
 
-            mnFramesToResetIMU = mMaxFrames;
-        }
+        mnFramesToResetIMU = mMaxFrames;
+    }
+
+    mbInitWith3KFs = false;
+    SetStepByStep(mbStep);
+
+    mnNumDataset = 0;
 
         if(!b_parse_cam || !b_parse_orb || !b_parse_imu)
         {
@@ -1793,7 +1798,6 @@ void Tracking::ResetFrameIMU()
 
 void Tracking::Track()
 {
-
     if (bStepByStep)
     {
         std::cout << "Tracking: Waiting to the next step" << std::endl;

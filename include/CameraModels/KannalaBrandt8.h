@@ -38,6 +38,15 @@ namespace ORB_SLAM3 {
         ar & const_cast<float&>(precision);
     }
 
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & boost::serialization::base_object<GeometricCamera>(*this);
+        ar & const_cast<float&>(precision);
+    }
+
     public:
         KannalaBrandt8() : precision(1e-6) {
             mvParameters.resize(8);

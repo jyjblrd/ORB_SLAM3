@@ -111,7 +111,9 @@ include/GeometricTools.h
 include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
-include/Settings.h)
+include/Settings.h
+include/serialize_tuple.h
+)
 
 add_subdirectory(Thirdparty/g2o)
 
@@ -172,6 +174,15 @@ add_executable(stereo_euroc
         Examples/Stereo/stereo_euroc.cc)
 target_link_libraries(stereo_euroc ${PROJECT_NAME})
 
+add_executable(stereo_save
+Examples/Stereo/stereo_save.cc)
+target_link_libraries(stereo_save ${PROJECT_NAME})
+
+add_executable(stereo_load
+Examples/Stereo/stereo_load.cc)
+target_link_libraries(stereo_load ${PROJECT_NAME})
+
+
 add_executable(stereo_tum_vi
         Examples/Stereo/stereo_tum_vi.cc)
 target_link_libraries(stereo_tum_vi ${PROJECT_NAME})
@@ -200,6 +211,14 @@ target_link_libraries(mono_kitti ${PROJECT_NAME})
 add_executable(mono_euroc
         Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
+
+add_executable(mono_save
+Examples/Monocular/mono_save.cc)
+target_link_libraries(mono_save ${PROJECT_NAME})
+
+add_executable(mono_load
+Examples/Monocular/mono_load.cc)
+target_link_libraries(mono_load ${PROJECT_NAME})
 
 add_executable(mono_tum_vi
         Examples/Monocular/mono_tum_vi.cc)
